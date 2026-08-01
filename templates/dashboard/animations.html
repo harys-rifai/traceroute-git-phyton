@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Globe Scanner - Animations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="/static/css/animations.css">
+    <style>
+        * {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: #0B0B0B;
+        }
+
+        .neon-text {
+            color: #4DFF00;
+            text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        }
+
+        .glass-effect {
+            background: rgba(11, 11, 11, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100vh; }
+        }
+
+        .sidebar-glow {
+            box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+        }
+
+        .nav-item.active {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+            color: white;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .traceroute-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .traceroute-input-group input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            color: #4DFF00;
+            font-family: monospace;
+            font-size: 0.9rem;
+            outline: none;
+            border-radius: 6px;
+            transition: border-color 0.2s ease;
+        }
+
+        .traceroute-input-group input:focus {
+            border-color: #4DFF00;
+            box-shadow: 0 0 10px rgba(77, 255, 0, 0.2);
+        }
+
+        .traceroute-input-group input::placeholder {
+            color: rgba(77, 255, 0, 0.4);
+        }
+
+        .btn-run {
+            padding: 0.6rem 1.5rem;
+            background: rgba(77, 255, 0, 0.15);
+            border: 1px solid #4DFF00;
+            color: #4DFF00;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-run:hover {
+            background: rgba(77, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(77, 255, 0, 0.3);
+        }
+
+        .btn-run:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .traceroute-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .traceroute-table th {
+            background: rgba(118, 185, 0, 0.1);
+            color: #4DFF00;
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            border-bottom: 2px solid #76B900;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
+        .traceroute-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid rgba(118, 185, 0, 0.1);
+            color: #e0e0e0;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .traceroute-table tr:hover {
+            background: rgba(118, 185, 0, 0.05);
+        }
+
+        .traceroute-table .hop-num {
+            color: #76B900;
+            font-weight: 700;
+        }
+
+        .traceroute-table .rtt {
+            color: #FFA500;
+        }
+
+        .traceroute-table .rtt-low {
+            color: #4DFF00;
+        }
+
+        .traceroute-table .rtt-mid {
+            color: #FFA500;
+        }
+
+        .traceroute-table .rtt-high {
+            color: #FF0000;
+        }
+
+        .traceroute-table .loss-high {
+            color: #FF0000;
+            font-weight: 700;
+        }
+
+        .traceroute-table .hostname {
+            color: #00BFFF;
+        }
+
+        .traceroute-table .as-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            background: rgba(118, 185, 0, 0.15);
+            color: #76B900;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(118, 185, 0, 0.15);
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4DFF00;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.25rem;
+        }
+
+        .how-it-works {
+            line-height: 1.7;
+            color: #d1d5db;
+            font-size: 0.85rem;
+        }
+
+        .how-it-works code {
+            background: rgba(118, 185, 0, 0.1);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            color: #4DFF00;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        .how-it-works strong {
+            color: #4DFF00;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .map-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 1.5rem;
+            padding: 0.5rem 1rem;
+            flex-wrap: wrap;
+        }
+
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+            color: #9ca3af;
+        }
+
+        .map-legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .dns-node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .dns-node .node-ip {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #4DFF00;
+            margin-top: 0.25rem;
+        }
+
+        .dns-node .node-location {
+            font-size: 0.65rem;
+            color: #9ca3af;
+            margin-top: 0.15rem;
+        }
+
+        .dns-node.active .node-icon {
+            animation: node-pulse 1s ease-in-out infinite;
+        }
+
+        .dns-node.completed .node-icon {
+            opacity: 0.6;
+        }
+
+        @keyframes node-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .dns-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.25rem 0;
+        }
+
+        .dns-connector .flow-line {
+            width: 2px;
+            height: 20px;
+            background: rgba(118, 185, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dns-connector .flow-line::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: #4DFF00;
+            animation: flow-down 1.5s linear infinite;
+        }
+
+        .dns-connector.active .flow-line {
+            background: rgba(118, 185, 0, 0.4);
+        }
+
+        .dns-connector.active .flow-line::after {
+            background: #4DFF00;
+            box-shadow: 0 0 8px #4DFF00;
+        }
+
+        @keyframes flow-down {
+            0% { top: -10px; }
+            100% { top: 30px; }
+        }
+
+        .dns-connector .flow-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4DFF00;
+            margin: 2px 0;
+            opacity: 0.5;
+        }
+
+        .dns-connector.active .flow-dot {
+            opacity: 1;
+            box-shadow: 0 0 6px #4DFF00;
+        }
+
+        .dns-resolution-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .dns-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .dns-step.active .dns-node {
+            border-color: #4DFF00;
+            box-shadow: 0 0 20px rgba(77, 255, 0, 0.3);
+        }
+
+        .dns-step.completed .dns-node {
+            opacity: 0.7;
+        }
+
+        .dns-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            border-radius: 8px;
+            background: rgba(11, 11, 11, 0.5);
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .dns-node .node-icon {
+            color: #4DFF00;
+            margin-bottom: 0.25rem;
+        }
+
+        .dns-node .node-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            text-align: center;
+        }
+
+        .dns-result {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            border-radius: 6px;
+            background: rgba(11, 11, 11, 0.4);
+            text-align: center;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+        }
+
+        .badge-live {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #4DFF00;
+            color: #0B0B0B;
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        .panel-body {
+            padding: 1rem;
+        }
+
+        .quick-facts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-fact {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(118, 185, 0, 0.05);
+            border: 1px solid rgba(118, 185, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        .quick-fact .fact-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4DFF00;
+        }
+
+        .quick-fact .fact-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .traceroute-input-group {
+                flex-direction: column;
+            }
+
+            .traceroute-table {
+                font-size: 0.7rem;
+            }
+
+            .traceroute-table th,
+            .traceroute-table td {
+                padding: 0.3rem 0.4rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#0B0B0B] text-gray-300">
+    <div class="scan-line"></div>
+
+    <div class="flex min-h-screen">
+        <aside class="w-64 glass-effect sidebar-glow flex flex-col">
+            <div class="p-6 border-b border-[#76B900] border-opacity-30">
+                <h1 class="text-2xl font-bold neon-text">NETWORK</h1>
+                <p class="text-sm text-gray-400">GLOBE SCANNER</p>
+            </div>
+
+            <nav class="flex-1 p-4">
+                <a href="/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span class="font-semibold">Dashboard</span>
+                </a>
+                <a href="/animations/" class="nav-item active flex items-center space-x-3 p-3 rounded mb-2 text-white bg-opacity-10 bg-[#76B900]">
+                    <svg class="w-5 h-5 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="font-semibold">Animations</span>
+                </a>
+                <a href="/api/dashboard/api/stats/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="/api/traceroute/traceroutes/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span>Traceroute</span>
+                </a>
+                <a href="/api/dns/dns/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>DNS Lookup</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-[#76B900] border-opacity-30">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-[#4DFF00] rounded-full pulse-dot"></div>
+                    <span class="text-sm text-gray-400">System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-auto">
+            <header class="mb-8">
+                <h2 class="text-4xl font-bold text-white mb-2">Network Animations</h2>
+                <p class="text-gray-400">Interactive traceroute path and DNS resolution visualizations</p>
+            </header>
+
+            <!-- Traceroute Quick Stats -->
+            <section class="mb-8">
+                <div class="glass-effect rounded-lg p-4">
+                    <h3 class="text-lg font-bold text-white mb-3">Traceroute Quick Facts</h3>
+                    <div class="quick-facts">
+                        <div class="quick-fact">
+                            <div class="fact-value">~200ms</div>
+                            <div class="fact-label">NYC to Tokyo RTT</div>
+                        </div>
+                        <div class="quick-fact">
+                            <div class="fact-value">~550</div>
+                            <div class="fact-label">Submarine Cables</div>
+                        </div>
+                        <div class="quick-fact">
+                            <div class="fact-value">75,000+</div>
+                            <div class="fact-label">Autonomous Systems</div>
+                        </div>
+                        <div class="quick-fact">
+                            <div class="fact-value">1969</div>
+                            <div class="fact-label">First ARPANET Message</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-World Traceroute Path Animation -->
+            <section class="mb-8">
+                <div class="glass-effect rounded-lg">
+                    <div class="panel-header">
+                        <h3 class="neon-text">Traceroute Path Animation</h3>
+                        <span class="badge-live">Real-time</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="traceroute-input-group mb-4">
+                            <input type="text" id="tracerouteTarget" placeholder="Domain, IP address, or paste a URL" value="google.com" />
+                            <button id="tracerouteRunBtn" class="btn-run">Run Traceroute</button>
+                        </div>
+
+                        <div class="stats-grid mb-4">
+                            <div class="stat-card">
+                                <div class="stat-value" id="statHops">0</div>
+                                <div class="stat-label">Hops</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statAvgRtt">0.0ms</div>
+                                <div class="stat-label">Avg RTT</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statNetworks">0</div>
+                                <div class="stat-label">Networks</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statDestRtt">0.0ms</div>
+                                <div class="stat-label">Dest RTT</div>
+                            </div>
+                        </div>
+
+                        <div class="map-container">
+                            <canvas id="tracerouteCanvas"></canvas>
+                        </div>
+
+                        <div class="map-legend">
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#4DFF00"></div>
+                                <span>Destination</span>
+                            </div>
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#76B900"></div>
+                                <span>Hop</span>
+                            </div>
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#00BFFF"></div>
+                                <span>IP Address</span>
+                            </div>
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#FFA500"></div>
+                                <span>RTT</span>
+                            </div>
+                            <div class="map-legend-item">
+                                <div class="map-legend-dot" style="background:#FF0000"></div>
+                                <span>Timeout</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="traceroute-table" id="tracerouteTable">
+                            <thead>
+                                <tr>
+                                    <th>Hop</th>
+                                    <th>Host / IP</th>
+                                    <th>AS</th>
+                                    <th>Location</th>
+                                    <th>Loss</th>
+                                    <th>Avg RTT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tracerouteTableBody">
+                                <tr><td colspan="6" class="text-center text-gray-500" style="font-family: Rajdhani, sans-serif; font-size: 0.85rem;">Enter a target and click Run Traceroute</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DNS Resolution Animation -->
+            <section class="mb-8">
+                <div class="glass-effect rounded-lg">
+                    <div class="panel-header">
+                        <h3 class="neon-text">DNS Resolution</h3>
+                        <span class="badge-live">Live</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="dnsResolutionContainer" class="dns-resolution-container">
+                            <div class="dns-step" data-step="0">
+                                <div class="dns-node client">
+                                    <div class="node-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                                    </div>
+                                    <div class="node-label">Your Browser</div>
+                                    <div class="node-ip">192.168.1.100</div>
+                                    <div class="node-location">New York, US</div>
+                                </div>
+                            </div>
+
+                            <div class="dns-connector" data-connector="0">
+                                <div class="flow-line"></div>
+                                <div class="flow-dot"></div>
+                            </div>
+
+                            <div class="dns-step" data-step="1">
+                                <div class="dns-node dns-server">
+                                    <div class="node-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                    </div>
+                                    <div class="node-label">DNS Resolver</div>
+                                    <div class="node-ip">8.8.8.8</div>
+                                    <div class="node-location">Google DNS, US</div>
+                                </div>
+                            </div>
+
+                            <div class="dns-connector" data-connector="1">
+                                <div class="flow-line"></div>
+                                <div class="flow-dot"></div>
+                            </div>
+
+                            <div class="dns-step" data-step="2">
+                                <div class="dns-node root-server">
+                                    <div class="node-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 2 22 12 27 22 22 2 17"></polyline><polyline points="2 12 2 17 12 22 22 17 2 12"></polyline></svg>
+                                    </div>
+                                    <div class="node-label">Root Server</div>
+                                    <div class="node-ip">a.root-servers.net</div>
+                                    <div class="node-location">Anycast, Global</div>
+                                </div>
+                            </div>
+
+                            <div class="dns-connector" data-connector="2">
+                                <div class="flow-line"></div>
+                                <div class="flow-dot"></div>
+                            </div>
+
+                            <div class="dns-step" data-step="3">
+                                <div class="dns-node tld-server">
+                                    <div class="node-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                    </div>
+                                    <div class="node-label">TLD Server</div>
+                                    <div class="node-ip">a.gtld-servers.net</div>
+                                    <div class="node-location">Verisign, US</div>
+                                </div>
+                            </div>
+
+                            <div class="dns-connector" data-connector="3">
+                                <div class="flow-line"></div>
+                                <div class="flow-dot"></div>
+                            </div>
+
+                            <div class="dns-step" data-step="4">
+                                <div class="dns-node auth-server">
+                                    <div class="node-icon">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                    </div>
+                                    <div class="node-label">Authoritative</div>
+                                    <div class="node-ip">ns1.example.com</div>
+                                    <div class="node-location">Cloudflare, US</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="dnsResult" class="dns-result">
+                            Press Start to begin DNS resolution
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button id="dnsRestartBtn" class="btn-run">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Restart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How Traceroute Works -->
+            <section class="mb-8">
+                <div class="glass-effect rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-white mb-4 neon-text">How Traceroute Works</h3>
+                    <div class="how-it-works">
+                        <p>Traceroute exploits a fundamental mechanism of the Internet Protocol: the <strong>Time-To-Live (TTL)</strong> field. Every IP packet contains a TTL value that decrements by one at each router. When TTL reaches zero, the router discards the packet and sends back an ICMP "Time Exceeded" message.</p>
+                        <p class="mt-2">By sending packets with incrementally increasing TTL values (1, 2, 3...), traceroute discovers each router along the path. The first packet (TTL=1) expires at the first router, revealing its address. The second packet (TTL=2) reaches the second router, and so on until the destination is reached.</p>
+                        <p class="mt-2">This technique was first implemented by Van Jacobson in 1987 and remains one of the most valuable tools for understanding network topology and diagnosing connectivity issues.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Stats Preview -->
+            <section>
+                <h3 class="text-xl font-bold text-white mb-4">Dashboard Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-effect rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                                <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Total Scans</p>
+                        <p class="text-3xl font-bold stat-value" id="total-scans">0</p>
+                    </div>
+
+                    <div class="glass-effect rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                                <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                            </div>
+                            <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">ONLINE</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Active Servers</p>
+                        <p class="text-3xl font-bold stat-value" id="active-servers">0</p>
+                    </div>
+
+                    <div class="glass-effect rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                                <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">GLOBAL</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-1">Global Datacenters</p>
+                        <p class="text-3xl font-bold stat-value" id="global-datacenters">0</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/traceroute-animation.js"></script>
+    <script src="/static/js/dns-resolution-animation.js"></script>
+    <script>
+        async function fetchStats() {
+            try {
+                var response = await fetch('/api/dashboard/api/stats/');
+                var data = await response.json();
+                document.getElementById('total-scans').textContent = data.total_scans.toLocaleString();
+                document.getElementById('active-servers').textContent = data.active_servers.toLocaleString();
+                document.getElementById('global-datacenters').textContent = data.global_datacenters.toLocaleString();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        fetchStats();
+        setInterval(fetchStats, 5000);
+    </script>
+</body>
+</html>

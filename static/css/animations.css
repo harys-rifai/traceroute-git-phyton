@@ -1,0 +1,367 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.animations-page {
+    background-color: #0B0B0B;
+    min-height: 100vh;
+}
+
+.animations-page .neon-text {
+    color: #4DFF00;
+    text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+}
+
+.animations-page .glass-effect {
+    background: rgba(11, 11, 11, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(118, 185, 0, 0.3);
+}
+
+.animations-page .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4DFF00;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.animations-page .panel {
+    border: 1px solid rgba(118, 185, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.animations-page .panel-header {
+    background: rgba(118, 185, 0, 0.1);
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(118, 185, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.animations-page .panel-header h3 {
+    color: #4DFF00;
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.animations-page .panel-body {
+    padding: 1rem;
+}
+
+.animations-page .badge-live {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    background-color: #4DFF00;
+    color: #0B0B0B;
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.dns-resolution-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 2rem 1rem;
+    flex-wrap: wrap;
+}
+
+.dns-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.dns-node {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.dns-node .node-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.dns-node .node-label {
+    font-size: 0.6rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.dns-node.client {
+    background: rgba(77, 255, 0, 0.15);
+    border: 2px solid #4DFF00;
+    color: #4DFF00;
+    box-shadow: 0 0 15px rgba(77, 255, 0, 0.3);
+}
+
+.dns-node.dns-server {
+    background: rgba(118, 185, 0, 0.15);
+    border: 2px solid #76B900;
+    color: #76B900;
+    box-shadow: 0 0 15px rgba(118, 185, 0, 0.3);
+}
+
+.dns-node.root-server {
+    background: rgba(255, 165, 0, 0.15);
+    border: 2px solid #FFA500;
+    color: #FFA500;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.3);
+}
+
+.dns-node.tld-server {
+    background: rgba(0, 191, 255, 0.15);
+    border: 2px solid #00BFFF;
+    color: #00BFFF;
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+}
+
+.dns-node.auth-server {
+    background: rgba(255, 0, 255, 0.15);
+    border: 2px solid #FF00FF;
+    color: #FF00FF;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+}
+
+.dns-connector {
+    width: 60px;
+    height: 2px;
+    background: rgba(118, 185, 0, 0.3);
+    position: relative;
+    margin: 0 0.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.dns-connector .flow-line {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+    animation: flow-right 2s linear infinite;
+}
+
+.dns-connector .flow-dot {
+    position: absolute;
+    top: -4px;
+    left: -10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #4DFF00;
+    box-shadow: 0 0 8px #4DFF00;
+    animation: flow-dot-right 2s linear infinite;
+}
+
+@keyframes flow-right {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@keyframes flow-dot-right {
+    0% { left: -10px; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { left: calc(100% + 10px); opacity: 0; }
+}
+
+.dns-step.active .dns-node {
+    animation: node-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes node-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.dns-step.completed .dns-node {
+    background: rgba(77, 255, 0, 0.25);
+    border-color: #4DFF00;
+    box-shadow: 0 0 20px rgba(77, 255, 0, 0.5);
+}
+
+.dns-step.active .dns-connector .flow-line {
+    background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+}
+
+.dns-step.active .dns-connector .flow-dot {
+    background: #4DFF00;
+    box-shadow: 0 0 8px #4DFF00;
+}
+
+.dns-result {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(118, 185, 0, 0.05);
+    border: 1px solid rgba(118, 185, 0, 0.2);
+    border-radius: 6px;
+    text-align: center;
+    font-family: monospace;
+    color: #4DFF00;
+    font-size: 0.85rem;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.traceroute-canvas-container {
+    position: relative;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(118, 185, 0, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.traceroute-canvas-container canvas {
+    display: block;
+    width: 100%;
+}
+
+.traceroute-legend {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+}
+
+.traceroute-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.traceroute-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.traceroute-controls {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid rgba(118, 185, 0, 0.2);
+}
+
+.traceroute-controls button {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(118, 185, 0, 0.3);
+    background: rgba(118, 185, 0, 0.1);
+    color: #4DFF00;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+
+.traceroute-controls button:hover {
+    background: rgba(118, 185, 0, 0.25);
+    border-color: #4DFF00;
+}
+
+.traceroute-controls button.active {
+    background: rgba(77, 255, 0, 0.2);
+    border-color: #4DFF00;
+}
+
+.hop-info {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    flex-wrap: wrap;
+}
+
+.hop-tag {
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.hop-tag.rtt {
+    background: rgba(118, 185, 0, 0.15);
+    color: #76B900;
+}
+
+.hop-tag.ip {
+    background: rgba(0, 191, 255, 0.15);
+    color: #00BFFF;
+}
+
+.hop-tag.hostname {
+    background: rgba(255, 165, 0, 0.15);
+    color: #FFA500;
+}
+
+@media (max-width: 768px) {
+    .dns-resolution-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .dns-connector {
+        width: 2px;
+        height: 40px;
+        margin: 0 auto;
+        margin-bottom: 0;
+    }
+
+    .dns-connector .flow-line {
+        animation: flow-down 2s linear infinite;
+    }
+
+    .dns-connector .flow-dot {
+        animation: flow-dot-down 2s linear infinite;
+    }
+
+    @keyframes flow-down {
+        0% { top: -100%; left: 0; width: 100%; height: 100%; }
+        100% { top: 100%; left: 0; width: 100%; height: 100%; }
+    }
+
+    @keyframes flow-dot-down {
+        0% { top: -10px; left: 0; opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { top: calc(100% + 10px); left: 0; opacity: 0; }
+    }
+}

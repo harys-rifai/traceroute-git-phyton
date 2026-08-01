@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traceroute - {{ traceroute.target }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+        }
+
+        .neon-text {
+            color: #4DFF00;
+            text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        }
+
+        .neon-border {
+            border: 1px solid #76B900;
+            box-shadow: 0 0 10px rgba(118, 185, 0, 0.5), inset 0 0 10px rgba(118, 185, 0, 0.1);
+        }
+
+        .glass-effect {
+            background: rgba(11, 11, 11, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100vh; }
+        }
+
+        .sidebar-glow {
+            box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+        }
+
+        .nav-item.active {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+            color: white;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .result-table th {
+            background: rgba(118, 185, 0, 0.1);
+            color: #4DFF00;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #76B900;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .result-table td {
+            padding: 8px 14px;
+            border-bottom: 1px solid rgba(118, 185, 0, 0.1);
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .result-table tr:hover {
+            background: rgba(118, 185, 0, 0.05);
+        }
+
+        .result-table tr.timed-out {
+            opacity: 0.6;
+        }
+
+        .latency-low {
+            color: #4DFF00;
+        }
+
+        .latency-mid {
+            color: #FFA500;
+        }
+
+        .latency-high {
+            color: #FF0000;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background-color: #4DFF00;
+            color: #0a0a0a;
+        }
+
+        .badge-warning {
+            background-color: #FFA500;
+            color: #0a0a0a;
+        }
+
+        .badge-danger {
+            background-color: #FF0000;
+            color: #fff;
+        }
+
+        .badge-info {
+            background-color: #76B900;
+            color: #0a0a0a;
+        }
+
+        .network-card {
+            background: rgba(118, 185, 0, 0.05);
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .network-card .as-name {
+            color: #4DFF00;
+            font-weight: 600;
+        }
+
+        .network-card .as-number {
+            color: #76B900;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .network-card .avg-response {
+            color: #e0e0e0;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .network-card .hosts-count {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .route-map-container {
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(118, 185, 0, 0.2);
+        }
+
+        .route-map-container .leaflet-container {
+            background: #0a0a0a;
+        }
+
+        .info-section {
+            background: rgba(11, 11, 11, 0.5);
+            border: 1px solid rgba(118, 185, 0, 0.15);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .info-section h3 {
+            color: #4DFF00;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-section p, .info-section li {
+            color: #b0b0b0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .info-section code {
+            background: rgba(118, 185, 0, 0.1);
+            color: #4DFF00;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .quick-facts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-fact {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(118, 185, 0, 0.05);
+            border: 1px solid rgba(118, 185, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        .quick-fact .fact-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4DFF00;
+        }
+
+        .quick-fact .fact-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 0.25rem;
+        }
+
+        .target-input-wrapper {
+            position: relative;
+        }
+
+        .target-input-wrapper input {
+            background: rgba(11, 11, 11, 0.8);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            color: #e0e0e0;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Rajdhani', sans-serif;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .target-input-wrapper input:focus {
+            border-color: #4DFF00;
+            box-shadow: 0 0 15px rgba(77, 255, 0, 0.3);
+            outline: none;
+        }
+
+        .target-input-wrapper input::placeholder {
+            color: #6b7280;
+        }
+
+        .run-btn {
+            background: linear-gradient(135deg, #76B900, #4DFF00);
+            color: #0a0a0a;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .run-btn:hover {
+            box-shadow: 0 0 25px rgba(77, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .try-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .try-link {
+            padding: 0.25rem 0.75rem;
+            background: rgba(118, 185, 0, 0.1);
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            border-radius: 20px;
+            color: #76B900;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .try-link:hover {
+            background: rgba(118, 185, 0, 0.2);
+            border-color: #4DFF00;
+            color: #4DFF00;
+        }
+
+        .hop-detail {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .hop-tag {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .hop-tag.rtt {
+            background: rgba(118, 185, 0, 0.15);
+            color: #76B900;
+        }
+
+        .hop-tag.ip {
+            background: rgba(0, 191, 255, 0.15);
+            color: #00BFFF;
+        }
+
+        .hop-tag.hostname {
+            background: rgba(255, 165, 0, 0.15);
+            color: #FFA500;
+        }
+
+        .hop-tag.loss {
+            background: rgba(255, 0, 0, 0.15);
+            color: #FF0000;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: rgba(118, 185, 0, 0.05);
+            border: 1px solid rgba(118, 185, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4DFF00;
+        }
+
+        .dest-rtt {
+            font-size: 0.85rem;
+            color: #76B900;
+        }
+
+        .hops-mapped {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .leaflet-popup-content {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+        }
+
+        .leaflet-popup-content strong {
+            color: #4DFF00;
+        }
+
+        @media (max-width: 768px) {
+            .result-table th, .result-table td {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-facts {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#0a0a0a] text-gray-300">
+    <div class="scan-line"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 glass-effect sidebar-glow flex flex-col">
+            <div class="p-6 border-b border-[#76B900] border-opacity-30">
+                <h1 class="text-2xl font-bold neon-text">NETWORK</h1>
+                <p class="text-sm text-gray-400">GLOBE SCANNER</p>
+            </div>
+
+            <nav class="flex-1 p-4">
+                <a href="/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span class="font-semibold">Dashboard</span>
+                </a>
+                <a href="/api/traceroute/traceroutes/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-white bg-opacity-10 bg-[#76B900]">
+                    <svg class="w-5 h-5 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span class="font-semibold">Traceroute</span>
+                </a>
+                <a href="/api/dns/dns/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>DNS Lookup</span>
+                </a>
+                <a href="/api/datacenters/datacenters/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>Datacenters</span>
+                </a>
+                <a href="/api/servers/servers/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                    <span>Servers</span>
+                </a>
+                <a href="/animations/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Animations</span>
+                </a>
+                <a href="/admin/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span>Admin Panel</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-[#76B900] border-opacity-30">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-[#4DFF00] rounded-full pulse-dot"></div>
+                    <span class="text-sm text-gray-400">System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-auto">
+            <!-- Header -->
+            <header class="mb-6">
+                <h2 class="text-3xl font-bold text-white mb-1">Traceroute</h2>
+                <p class="text-gray-400">Network path analysis for {{ traceroute.target }}</p>
+            </header>
+
+            <!-- Target Input -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="target-input-wrapper flex-1">
+                        <input type="text" id="targetInput" value="{{ traceroute.target }}" placeholder="Domain, IP address, or paste a URL" />
+                        <div class="try-links">
+                            <span class="try-link" onclick="document.getElementById('targetInput').value='google.com'">google.com</span>
+                            <span class="try-link" onclick="document.getElementById('targetInput').value='bbc.co.uk'">bbc.co.uk</span>
+                            <span class="try-link" onclick="document.getElementById('targetInput').value='1.1.1.1'">1.1.1.1</span>
+                            <span class="try-link" onclick="document.getElementById('targetInput').value='github.com'">github.com</span>
+                        </div>
+                    </div>
+                    <button class="run-btn" onclick="runTraceroute()">Run Traceroute</button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-4 mb-6 text-sm">
+                <div class="glass-effect rounded-lg px-4 py-2">
+                    <span class="text-gray-400">Hops Mapped:</span>
+                    <span class="text-white font-semibold ml-1">{{ mapped_hops }} of {{ total_hops }}</span>
+                </div>
+                <div class="glass-effect rounded-lg px-4 py-2">
+                    <span class="text-gray-400">Dest RTT:</span>
+                    <span class="text-[#4DFF00] font-semibold ml-1">{{ dest_rtt }} ms</span>
+                </div>
+                <div class="glass-effect rounded-lg px-4 py-2">
+                    <span class="text-gray-400">Avg Response:</span>
+                    <span class="text-white font-semibold ml-1">{{ avg_response }} ms</span>
+                </div>
+            </div>
+
+            <!-- Route Map -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-bold text-white">Route Map</h3>
+                    <div class="flex items-center gap-2">
+                        <button id="mapZoomIn" class="px-2 py-1 bg-[#76B900] bg-opacity-20 border border-[#76B900] border-opacity-30 rounded text-[#4DFF00] text-sm font-semibold hover:bg-opacity-30 transition-all">+</button>
+                        <button id="mapZoomOut" class="px-2 py-1 bg-[#76B900] bg-opacity-20 border border-[#76B900] border-opacity-30 rounded text-[#4DFF00] text-sm font-semibold hover:bg-opacity-30 transition-all">-</button>
+                    </div>
+                </div>
+                <div class="route-map-container" id="routeMap"></div>
+                <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                    <span><span class="inline-block w-3 h-3 rounded-full bg-[#4DFF00] mr-1"></span>Destination</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full bg-[#76B900] mr-1"></span>Hop</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full bg-[#FFA500] mr-1"></span>High Latency</span>
+                    <span><span class="inline-block w-3 h-3 rounded-full bg-[#FF0000] mr-1"></span>Timeout</span>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-white">Traceroute Results</h3>
+                    <span class="badge badge-info">{{ traceroute.status }}</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="result-table">
+                        <thead>
+                            <tr>
+                                <th>Hop</th>
+                                <th>Host / IP</th>
+                                <th>AS</th>
+                                <th>Location</th>
+                                <th>Loss</th>
+                                <th>Avg RTT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hop in hops %}
+                            <tr class="{% if hop.loss == 100 %}timed-out{% endif %}">
+                                <td class="font-mono text-[#76B900]">{{ hop.hop_number }}</td>
+                                <td>
+                                    {% if hop.hostname %}
+                                        <div class="font-mono text-sm text-white">{{ hop.hostname }}</div>
+                                    {% else %}
+                                        <div class="text-gray-500 text-sm">no response</div>
+                                    {% endif %}
+                                    {% if hop.ip_address %}
+                                        <div class="font-mono text-xs text-[#00BFFF]">{{ hop.ip_address }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if hop.asn %}
+                                        <div class="text-sm">{{ hop.asn }}</div>
+                                    {% else %}
+                                        <span class="text-gray-500">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if hop.country or hop.city %}
+                                        <div class="text-sm">
+                                            {% if hop.country %}{{ hop.country }}{% endif %}
+                                            {% if hop.city %} ≈ {{ hop.city }}{% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-500">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if hop.loss is not None %}
+                                        <span class="{% if hop.loss == 100 %}text-red-400 font-bold{% elif hop.loss > 0 %}text-yellow-400{% else %}text-green-400{% endif %}">
+                                            {{ hop.loss }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-500">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if hop.latency is not None %}
+                                        <span class="{% if hop.latency < 15 %}latency-low{% elif hop.latency < 60 %}latency-mid{% else %}latency-high{% endif %}">
+                                            {{ hop.latency }}ms
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-500">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Networks Traversed -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-white mb-4">Networks Traversed</h3>
+                <div class="stats-grid">
+                    {% for network in networks %}
+                    <div class="network-card">
+                        <div class="as-name">{{ network.as_name }}</div>
+                        <div class="as-number">{{ network.asn }}</div>
+                        <div class="mt-2 flex justify-between items-center">
+                            <span class="avg-response">{{ network.avg_response }} ms</span>
+                            <span class="hosts-count">{{ network.hosts }} host{{ network.hosts|pluralize }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- How Traceroute Works -->
+            <div class="info-section mb-6">
+                <h3>How Traceroute Works</h3>
+                <p class="mb-3">Traceroute exploits a fundamental mechanism of the Internet Protocol: the <code>Time-To-Live (TTL)</code> field. Every IP packet contains a TTL value that decrements by one at each router. When TTL reaches zero, the router discards the packet and sends back an ICMP "Time Exceeded" message.</p>
+                <p>By sending packets with incrementally increasing TTL values (1, 2, 3...), traceroute discovers each router along the path. The first packet (TTL=1) expires at the first router, revealing its address. The second packet (TTL=2) reaches the second router, and so on until the destination is reached.</p>
+                <p class="mt-3">This technique was first implemented by Van Jacobson in 1987 and remains one of the most valuable tools for understanding network topology and diagnosing connectivity issues.</p>
+            </div>
+
+            <!-- Interpreting Your Results -->
+            <div class="info-section mb-6">
+                <h3>Interpreting Your Results</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Hop Count:</strong> The number of routers between you and the destination. Fewer hops generally means a more direct route, though this doesn't always correlate with speed.</li>
+                    <li><strong>Response Time (Latency):</strong> Measured in milliseconds, this shows how long a round-trip takes to each hop. Latency accumulates — each hop adds to the total delay. Transatlantic links typically add 60-80ms, while transpacific routes can add 100-150ms.</li>
+                    <li><strong>Asterisks (*):</strong> Indicate a timeout — the router didn't respond. This often happens because routers deprioritize ICMP traffic under load, or have ICMP disabled entirely. A few timeouts usually aren't cause for concern.</li>
+                    <li><strong>AS Numbers:</strong> Each Autonomous System (AS) represents a network under unified administrative control. Seeing your traffic traverse multiple ASes helps identify peering relationships and potential bottlenecks.</li>
+                </ul>
+            </div>
+
+            <!-- When to Use Traceroute -->
+            <div class="info-section mb-6">
+                <h3>When to Use Traceroute</h3>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong>Diagnosing Slow Connections:</strong> If a website loads slowly, traceroute can reveal where the delay occurs. A sudden jump in latency at a specific hop often indicates congestion or a problematic link.</li>
+                    <li><strong>Identifying Network Outages:</strong> When you can't reach a server, traceroute shows exactly where the path breaks. This helps determine whether the issue is with your ISP, a transit provider, or the destination network.</li>
+                    <li><strong>Verifying Geographic Routing:</strong> For latency-sensitive applications like gaming or trading, confirming that traffic takes an efficient geographic path matters.</li>
+                    <li><strong>Understanding CDN Behavior:</strong> Content delivery networks route users to nearby edge servers. Traceroute reveals which CDN location you're hitting and whether the routing is optimal for your location.</li>
+                </ul>
+            </div>
+
+            <!-- The Internet's Hidden Infrastructure -->
+            <div class="info-section mb-6">
+                <h3>The Internet's Hidden Infrastructure</h3>
+                <p class="mb-3">Every traceroute tells a story about the Internet's physical and logical structure. Your packets might traverse undersea cables spanning thousands of miles, pass through Internet Exchange Points where hundreds of networks interconnect, and hop between data centers operated by different companies.</p>
+                <p>The path your traffic takes depends on complex routing decisions made by BGP (Border Gateway Protocol), commercial peering agreements between networks, and real-time network conditions. The same destination might be reached via completely different paths at different times of day.</p>
+                <p class="mt-3">Major Internet Exchange Points like DE-CIX Frankfurt, AMS-IX Amsterdam, and LINX London handle terabits of traffic per second, serving as critical waypoints where networks exchange data directly rather than paying transit providers.</p>
+            </div>
+
+            <!-- Network Quick Facts -->
+            <div class="glass-effect rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-white mb-4">Network Quick Facts</h3>
+                <div class="quick-facts">
+                    <div class="quick-fact">
+                        <div class="fact-value">~200ms</div>
+                        <div class="fact-label">NYC to Tokyo RTT</div>
+                    </div>
+                    <div class="quick-fact">
+                        <div class="fact-value">~550</div>
+                        <div class="fact-label">Submarine Cables</div>
+                    </div>
+                    <div class="quick-fact">
+                        <div class="fact-value">75,000+</div>
+                        <div class="fact-label">Autonomous Systems</div>
+                    </div>
+                    <div class="quick-fact">
+                        <div class="fact-value">1969</div>
+                        <div class="fact-label">First ARPANET Message</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize the route map with traceroute-online.com style
+        var map = L.map('routeMap', {
+            zoomControl: false,
+            attributionControl: true,
+        }).setView([40.7128, -74.0060], 4);
+
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Leaflet | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Collect hop locations from the server-side data
+        var hopLocations = [];
+        {% for hop in hops %}
+            {% if hop.country and hop.latency is not None %}
+                hopLocations.push({
+                    lat: 40.7128,
+                    lng: -74.0060,
+                    label: '{{ hop.hostname|default:hop.ip_address }}',
+                    ip: '{{ hop.ip_address|default:"" }}',
+                    latency: {{ hop.latency|default:0 }},
+                    color: {{ hop.latency|default:0 }} < 15 ? '#4DFF00' : {{ hop.latency|default:0 }} < 60 ? '#FFA500' : '#FF0000',
+                    hopNum: {{ hop.hop_number }},
+                    asn: '{{ hop.asn|default:"" }}',
+                    city: '{{ hop.city|default:"" }}',
+                    country: '{{ hop.country|default:"" }}',
+                });
+            {% endif %}
+        {% endfor %}
+
+        // If no hop data, use default locations
+        if (hopLocations.length === 0) {
+            hopLocations = [
+                { lat: 40.7357, lng: -73.9911, label: 'Linode - Newark, NJ', ip: '0.0.0.0', latency: 0.5, color: '#4DFF00', hopNum: 1, asn: 'AS63949', city: 'Newark', country: 'United States' },
+                { lat: 40.7128, lng: -74.0060, label: 'New York City', ip: '2607:f8b0:8461:280::1', latency: 1.9, color: '#4DFF00', hopNum: 6, asn: 'AS15169', city: 'New York', country: 'United States' },
+                { lat: 38.9072, lng: -77.0369, label: 'Washington', ip: '2001:4860::c:4002:f663', latency: 9.7, color: '#4DFF00', hopNum: 12, asn: 'AS15169', city: 'Washington', country: 'United States' },
+            ];
+        }
+
+        // Draw route path with gradient color based on latency
+        if (hopLocations.length > 1) {
+            var pathCoords = hopLocations.map(function(loc) {
+                return [loc.lat, loc.lng];
+            });
+
+            // Draw the full path
+            L.polyline(pathCoords, {
+                color: '#76B900',
+                weight: 3,
+                opacity: 0.4,
+                dashArray: '8, 12',
+            }).addTo(map);
+
+            // Draw animated packet along the path
+            var packetMarker = L.circleMarker(pathCoords[0], {
+                radius: 5,
+                fillColor: '#4DFF00',
+                color: '#4DFF00',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 1,
+            }).addTo(map);
+
+            var packetProgress = 0;
+            var packetDirection = 1;
+            var packetSpeed = 0.005;
+
+            function animatePacket() {
+                packetProgress += packetSpeed * packetDirection;
+                if (packetProgress >= 1) {
+                    packetProgress = 1;
+                    packetDirection = -1;
+                } else if (packetProgress <= 0) {
+                    packetProgress = 0;
+                    packetDirection = 1;
+                }
+
+                var totalSegments = pathCoords.length - 1;
+                var segmentIndex = Math.min(Math.floor(packetProgress * totalSegments), totalSegments - 1);
+                var segmentProgress = (packetProgress * totalSegments) - segmentIndex;
+
+                var lat = pathCoords[segmentIndex][0] + (pathCoords[segmentIndex + 1][0] - pathCoords[segmentIndex][0]) * segmentProgress;
+                var lng = pathCoords[segmentIndex][1] + (pathCoords[segmentIndex + 1][1] - pathCoords[segmentIndex][1]) * segmentProgress;
+
+                packetMarker.setLatLng([lat, lng]);
+
+                // Color the packet based on current segment latency
+                var currentHop = hopLocations[Math.min(segmentIndex, hopLocations.length - 1)];
+                var lat = currentHop.latency;
+                var packetColor = lat < 15 ? '#4DFF00' : lat < 60 ? '#FFA500' : '#FF0000';
+                packetMarker.setStyle({ fillColor: packetColor, color: packetColor });
+
+                requestAnimationFrame(animatePacket);
+            }
+
+            animatePacket();
+        }
+
+        // Add markers for each hop
+        hopLocations.forEach(function(loc) {
+            var markerColor = loc.color;
+            var radius = loc.hopNum === hopLocations.length ? 8 : 5;
+
+            L.circleMarker([loc.lat, loc.lng], {
+                radius: radius,
+                fillColor: markerColor,
+                color: '#000',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.85,
+            }).addTo(map).bindPopup(
+                '<div style="font-family:Rajdhani,sans-serif;font-size:13px;">' +
+                '<strong>Hop ' + loc.hopNum + '</strong><br>' +
+                loc.label + '<br>' +
+                (loc.ip ? 'IP: ' + loc.ip + '<br>' : '') +
+                (loc.asn ? 'AS: ' + loc.asn + '<br>' : '') +
+                (loc.country ? loc.country : '') +
+                (loc.city ? ' \u2248 ' + loc.city : '') +
+                '<br>Latency: <span style="color:' + markerColor + '">' + loc.latency + 'ms</span>' +
+                '</div>'
+            );
+        });
+
+        // Fit map to bounds
+        if (hopLocations.length > 0) {
+            var bounds = L.latLngBounds(hopLocations.map(function(loc) {
+                return [loc.lat, loc.lng];
+            }));
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+
+        // Zoom control buttons
+        document.getElementById('mapZoomIn').addEventListener('click', function() {
+            map.zoomIn();
+        });
+        document.getElementById('mapZoomOut').addEventListener('click', function() {
+            map.zoomOut();
+        });
+        }
+
+        function runTraceroute() {
+            var target = document.getElementById('targetInput').value.trim();
+            if (target) {
+                window.location.href = '/traceroute/' + encodeURIComponent(target) + '/';
+            }
+        }
+    </script>
+</body>
+</html>

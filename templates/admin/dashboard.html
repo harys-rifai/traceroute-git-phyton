@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Network Globe Scanner - Administration{% endblock %}</title>
+    {% load static %}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: #0B0B0B;
+        }
+
+        .neon-text {
+            color: #4DFF00;
+            text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        }
+
+        .glass-effect {
+            background: rgba(11, 11, 11, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(118, 185, 0, 0.6);
+        }
+
+        .sidebar-glow {
+            box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        }
+
+        .stat-value {
+            background: linear-gradient(135deg, #76B900, #4DFF00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+            }
+            100% {
+                top: 100vh;
+            }
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: rgba(118, 185, 0, 0.1);
+            color: #4DFF00;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #76B900;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(118, 185, 0, 0.1);
+            color: #e0e0e0;
+        }
+
+        .data-table tr:hover {
+            background: rgba(118, 185, 0, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background-color: #4DFF00;
+            color: #0B0B0B;
+        }
+
+        .badge-warning {
+            background-color: #FFA500;
+            color: #0B0B0B;
+        }
+
+        .badge-danger {
+            background-color: #FF0000;
+            color: #fff;
+        }
+
+        .badge-info {
+            background-color: #76B900;
+            color: #0B0B0B;
+        }
+
+        .btn-neon {
+            background: linear-gradient(135deg, #76B900, #4DFF00);
+            color: #0B0B0B;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(118, 185, 0, 0.4);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 13px;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 0 25px rgba(77, 255, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+
+        .action-btn {
+            background: none;
+            border: 1px solid rgba(118, 185, 0, 0.3);
+            color: #76B900;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: rgba(118, 185, 0, 0.1);
+            color: #4DFF00;
+        }
+
+        .action-btn.delete {
+            border-color: rgba(255, 0, 0, 0.3);
+            color: #FF0000;
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .action-btn.edit {
+            border-color: rgba(255, 165, 0, 0.3);
+            color: #FFA500;
+        }
+
+        .action-btn.edit:hover {
+            background: rgba(255, 165, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-[#0B0B0B] text-gray-300">
+    <div class="scan-line"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 glass-effect sidebar-glow flex flex-col">
+            <div class="p-6 border-b border-[#76B900] border-opacity-30">
+                <h1 class="text-2xl font-bold neon-text">NETWORK</h1>
+                <p class="text-sm text-gray-400">GLOBE SCANNER</p>
+            </div>
+
+            <nav class="flex-1 p-4">
+                <a href="/admin/dashboard/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-white bg-opacity-10 bg-[#76B900]">
+                    <svg class="w-5 h-5 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span class="font-semibold">Dashboard</span>
+                </a>
+                <a href="/admin/datacenter/datacenter/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>Datacenters</span>
+                </a>
+                <a href="/admin/servers/server/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                    <span>Servers</span>
+                </a>
+                <a href="/admin/traceroute/traceroute/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <span>Traceroute</span>
+                </a>
+                <a href="/api/traceroute/wan/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>WAN Status</span>
+                </a>
+                <a href="/admin/dnslookup/dnsquery/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>DNS Queries</span>
+                </a>
+                <a href="/admin/accounts/customuser/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 014 4V7.5h1.25a2.25 2.25 0 012.25 2.25v9.5a2.25 2.25 0 01-2.25 2.25h-9.5A2.25 2.25 0 015.5 19.25v-9.5a2.25 2.25 0 012.25-2.25H10V8.354a4 4 0 014-4z"></path></svg>
+                    <span>Users</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-[#76B900] border-opacity-30">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-[#4DFF00] rounded-full pulse-dot"></div>
+                    <span class="text-sm text-gray-400">System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8 overflow-auto">
+            <header class="mb-8">
+                <h2 class="text-4xl font-bold text-white mb-2">Dashboard Overview</h2>
+                <p class="text-gray-400">Real-time network monitoring and management</p>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Total Scans</p>
+                    <p class="text-3xl font-bold stat-value">{{ total_traceroutes }}</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">GLOBAL</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Datacenters</p>
+                    <p class="text-3xl font-bold stat-value">{{ total_datacenters }}</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">ONLINE</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Active Servers</p>
+                    <p class="text-3xl font-bold stat-value">{{ total_servers }}</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">DNS Queries</p>
+                    <p class="text-3xl font-bold stat-value">{{ total_dns_queries }}</p>
+                </div>
+            </div>
+
+            <!-- Data Tables Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Recent Traceroutes -->
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Recent Traceroutes</h3>
+                        <a href="/admin/traceroute/traceroute/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View All &#8594;</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Target</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="traceroute-table">
+                                {% for t in traceroutes %}
+                                <tr>
+                                    <td class="text-[#4DFF00]">{{ t.target }}</td>
+                                    <td>
+                                        {% if t.status == 'COMPLETED' %}
+                                        <span class="badge badge-success">Completed</span>
+                                        {% elif t.status == 'RUNNING' %}
+                                        <span class="badge badge-info">Running</span>
+                                        {% elif t.status == 'PENDING' %}
+                                        <span class="badge badge-warning">Pending</span>
+                                        {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-gray-400">{{ t.created_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-gray-500">No traceroutes yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Servers -->
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Recent Servers</h3>
+                        <a href="/admin/servers/server/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View All &#8594;</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Hostname</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                    <th>Datacenter</th>
+                                </tr>
+                            </thead>
+                            <tbody id="server-table">
+                                {% for server in servers %}
+                                <tr>
+                                    <td class="text-[#4DFF00] font-semibold">{{ server.hostname }}</td>
+                                    <td class="font-mono text-sm">{{ server.ip_address }}</td>
+                                    <td>
+                                        {% if server.status == 'ONLINE' %}
+                                        <span class="badge badge-success">Online</span>
+                                        {% elif server.status == 'OFFLINE' %}
+                                        <span class="badge badge-danger">Offline</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">Maintenance</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-gray-400">{{ server.datacenter.name }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-gray-500">No servers yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Datacenters Overview -->
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Datacenters</h3>
+                        <a href="/admin/datacenter/datacenter/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View All &#8594;</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Provider</th>
+                                    <th>Country</th>
+                                    <th>Tier</th>
+                                </tr>
+                            </thead>
+                            <tbody id="datacenters-table">
+                                {% for dc in datacenters %}
+                                <tr>
+                                    <td class="text-[#4DFF00] font-semibold">{{ dc.name }}</td>
+                                    <td>{{ dc.provider }}</td>
+                                    <td>{{ dc.country }}</td>
+                                    <td><span class="badge badge-info">{{ dc.tier }}</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center text-gray-500">No datacenters yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DNS Queries Overview -->
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Recent DNS Queries</h3>
+                        <a href="/admin/dnslookup/dnsquery/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View All &#8594;</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Domain</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dns-table">
+                                {% for d in dns_queries %}
+                                <tr>
+                                    <td class="text-[#4DFF00]">{{ d.domain }}</td>
+                                    <td><span class="badge badge-info">{{ d.record_type }}</span></td>
+                                    <td class="text-gray-400">{{ d.created_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-gray-500">No DNS queries yet</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="glass-effect rounded-lg p-6">
+                <h3 class="text-xl font-bold text-white mb-4">Network Performance</h3>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- WAN Status -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white">WAN Status</h3>
+                    <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">WAN State</p>
+                        <p class="text-2xl font-bold" id="wan-state" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">WAN IP</p>
+                        <p class="text-2xl font-bold stat-value" id="wan-ip">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Gateway</p>
+                        <p class="text-lg font-bold mono" id="wan-gateway" style="color: #00BFFF;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Uptime</p>
+                        <p class="text-lg font-bold" id="wan-uptime" style="color: #FFA500;">--</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">WAN MAC</p>
+                        <p class="font-mono text-sm" id="wan-mac" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">Connection Type</p>
+                        <p class="text-sm" id="wan-type" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">IPv6 Status</p>
+                        <p class="text-sm" id="wan-ipv6" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">IPv6 Address</p>
+                        <p class="font-mono text-sm" id="wan-ipv6-addr" style="color: #00BFFF;">--</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-right">
+                    <a href="/api/traceroute/wan/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View Full WAN Details &#8594;</a>
+                </div>
+            </div>
+
+            <!-- DNS Animation -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white">DNS Resolution Animation</h3>
+                    <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">SVG + CSS</span>
+                </div>
+                <div id="dns-animation" class="relative" style="height: 200px;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Network Traffic (GB)',
+                    data: [65, 78, 90, 81, 95, 110],
+                    borderColor: '#76B900',
+                    backgroundColor: 'rgba(118, 185, 0, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4DFF00',
+                    pointBorderColor: '#4DFF00',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#4DFF00',
+                            font: {
+                                family: 'Rajdhani',
+                                size: 14,
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(118, 185, 0, 0.1)',
+                        },
+                        ticks: {
+                            color: '#76B900',
+                            font: {
+                                family: 'Rajdhani',
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(118, 185, 0, 0.1)',
+                        },
+                        ticks: {
+                            color: '#76B900',
+                            font: {
+                                family: 'Rajdhani',
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Traceroute Canvas Animation - hop-by-hop path with traveling packet
+        (function() {
+            const canvas = document.getElementById('tracerouteCanvas');
+            const ctx2 = canvas.getContext('2d');
+            let hops = [];
+            let packets = [];
+            let w = 0;
+            let h = 0;
+
+            function resize() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width - 40;
+                canvas.height = 200;
+                w = canvas.width;
+                h = canvas.height;
+                initHops();
+            }
+
+            function initHops() {
+                const hopNames = ['Tokyo', 'Singapore', 'Frankfurt', 'Jakarta', 'Bali', 'Batam'];
+                const colors = ['#4DFF00', '#4DFF00', '#76B900', '#FFA500', '#FFA500', '#FFA500'];
+                const yPositions = [0.2, 0.35, 0.5, 0.65, 0.4, 0.7];
+                hops = [];
+                packets = [];
+
+                hopNames.forEach((name, i) => {
+                    hops.push({
+                        x: (i + 1) * (w / (hopNames.length + 1)),
+                        y: h * yPositions[i],
+                        name: name,
+                        color: colors[i],
+                        pulse: Math.random() * Math.PI * 2,
+                    });
+                });
+            }
+
+            function draw() {
+                ctx2.clearRect(0, 0, w, h);
+
+                // Draw grid
+                ctx2.strokeStyle = 'rgba(118, 185, 0, 0.05)';
+                ctx2.lineWidth = 1;
+                for (let x = 0; x < w; x += 40) {
+                    ctx2.beginPath(); ctx2.moveTo(x, 0); ctx2.lineTo(x, h); ctx2.stroke();
+                }
+                for (let y = 0; y < h; y += 30) {
+                    ctx2.beginPath(); ctx2.moveTo(0, y); ctx2.lineTo(w, y); ctx2.stroke();
+                }
+
+                // Draw connections
+                for (let i = 0; i < hops.length - 1; i++) {
+                    ctx2.beginPath();
+                    ctx2.moveTo(hops[i].x, hops[i].y);
+                    ctx2.lineTo(hops[i + 1].x, hops[i + 1].y);
+                    ctx2.strokeStyle = 'rgba(118, 185, 0, 0.2)';
+                    ctx2.lineWidth = 2;
+                    ctx2.setLineDash([4, 4]);
+                    ctx2.stroke();
+                    ctx2.setLineDash([]);
+                }
+
+                // Spawn packets
+                if (Math.random() < 0.05) {
+                    packets.push({
+                        from: 0,
+                        progress: 0,
+                        speed: Math.random() * 0.005 + 0.003,
+                        color: '#4DFF00',
+                        size: 4,
+                    });
+                }
+
+                // Draw and update packets
+                packets = packets.filter(pkt => {
+                    pkt.progress += pkt.speed;
+                    if (pkt.progress >= 1) return false;
+
+                    const fromHop = hops[pkt.from];
+                    const toHop = hops[Math.min(pkt.from + 1, hops.length - 1)];
+                    const x = fromHop.x + (toHop.x - fromHop.x) * pkt.progress;
+                    const y = fromHop.y + (toHop.y - fromHop.y) * pkt.progress;
+
+                    // Glow
+                    ctx2.beginPath();
+                    ctx2.arc(x, y, pkt.size + 6, 0, Math.PI * 2);
+                    ctx2.fillStyle = pkt.color + '30';
+                    ctx2.fill();
+
+                    // Packet
+                    ctx2.beginPath();
+                    ctx2.arc(x, y, pkt.size, 0, Math.PI * 2);
+                    ctx2.fillStyle = pkt.color;
+                    ctx2.fill();
+
+                    return true;
+                });
+
+                // Draw hops
+                hops.forEach((hop, i) => {
+                    hop.pulse += 0.05;
+                    const glow = Math.sin(hop.pulse) * 3 + 5;
+
+                    // Outer glow
+                    ctx2.beginPath();
+                    ctx2.arc(hop.x, hop.y, 14 + glow, 0, Math.PI * 2);
+                    ctx2.fillStyle = hop.color + '20';
+                    ctx2.fill();
+
+                    // Circle
+                    ctx2.beginPath();
+                    ctx2.arc(hop.x, hop.y, 10, 0, Math.PI * 2);
+                    ctx2.fillStyle = hop.color;
+                    ctx2.fill();
+
+                    // Label
+                    ctx2.fillStyle = '#e0e0e0';
+                    ctx2.font = '11px Rajdhani';
+                    ctx2.textAlign = 'center';
+                    ctx2.fillText(hop.name, hop.x, hop.y - 20);
+
+                    // Hop number
+                    ctx2.fillStyle = '#0B0B0B';
+                    ctx2.font = 'bold 10px Rajdhani';
+                    ctx2.fillText(i + 1, hop.x, hop.y + 4);
+                });
+
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            draw();
+        })();
+
+        // DNS Resolution SVG + CSS Animation - different approach
+        (function() {
+            const container = document.getElementById('dns-animation');
+            const width = container.clientWidth;
+            const height = 200;
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            container.appendChild(svg);
+
+            const nodes = [
+                { x: width * 0.1, y: height * 0.5, label: 'Client', color: '#4DFF00', type: 'client' },
+                { x: width * 0.3, y: height * 0.3, label: 'DNS Server', color: '#76B900', type: 'server' },
+                { x: width * 0.5, y: height * 0.7, label: 'Root Server', color: '#FFA500', type: 'root' },
+                { x: width * 0.7, y: height * 0.35, label: 'TLD Server', color: '#FFA500', type: 'tld' },
+                { x: width * 0.9, y: height * 0.5, label: 'Authoritative', color: '#4DFF00', type: 'auth' },
+            ];
+
+            const edges = [
+                [0, 1], [1, 2], [1, 3], [3, 4],
+            ];
+
+            // Draw edges
+            edges.forEach(([a, b]) => {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', nodes[a].x);
+                line.setAttribute('y1', nodes[a].y);
+                line.setAttribute('x2', nodes[b].x);
+                line.setAttribute('y2', nodes[b].y);
+                line.setAttribute('stroke', 'rgba(118, 185, 0, 0.2)');
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-dasharray', '4,4');
+                svg.appendChild(line);
+            });
+
+            // Draw nodes
+            nodes.forEach((node, i) => {
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', '16');
+                circle.setAttribute('fill', node.color + '30');
+                circle.setAttribute('stroke', node.color);
+                circle.setAttribute('stroke-width', '2');
+                g.appendChild(circle);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', node.x);
+                text.setAttribute('y', node.y + 4);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#e0e0e0');
+                text.setAttribute('font-size', '9');
+                text.setAttribute('font-family', 'Rajdhani, sans-serif');
+                text.textContent = node.label;
+                g.appendChild(text);
+
+                svg.appendChild(g);
+            });
+
+            // Animate DNS query packets using SVG circles
+            let dnsPackets = [];
+            let dnsStep = 0;
+            const dnsPath = [0, 1, 2, 1, 3, 4, 3, 1, 0];
+
+            function animateDNS() {
+                // Remove old packets
+                dnsPackets.forEach(pkt => {
+                    if (pkt.element && pkt.element.parentNode) {
+                        pkt.element.parentNode.removeChild(pkt.element);
+                    }
+                });
+                dnsPackets = dnsPackets.filter(pkt => pkt.progress < 1);
+
+                // Create new packet for current step
+                if (dnsStep < dnsPath.length - 1) {
+                    const fromIdx = dnsPath[dnsStep];
+                    const toIdx = dnsPath[dnsStep + 1];
+                    const from = nodes[fromIdx];
+                    const to = nodes[toIdx];
+
+                    const pkt = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    pkt.setAttribute('r', '5');
+                    pkt.setAttribute('fill', '#4DFF00');
+                    svg.appendChild(pkt);
+
+                    dnsPackets.push({
+                        element: pkt,
+                        fromX: from.x,
+                        fromY: from.y,
+                        toX: to.x,
+                        toY: to.y,
+                        progress: 0,
+                        speed: 0.02,
+                    });
+
+                    dnsStep++;
+                } else {
+                    dnsStep = 0;
+                }
+
+                // Update packets
+                dnsPackets.forEach(pkt => {
+                    pkt.progress += pkt.speed;
+                    if (pkt.progress > 1) pkt.progress = 1;
+                    const x = pkt.fromX + (pkt.toX - pkt.fromX) * pkt.progress;
+                    const y = pkt.fromY + (pkt.toY - pkt.fromY) * pkt.progress;
+                    pkt.element.setAttribute('cx', x);
+                    pkt.element.setAttribute('cy', y);
+
+                    // Fade out near end
+                    if (pkt.progress > 0.8) {
+                        pkt.element.setAttribute('opacity', 1 - (pkt.progress - 0.8) * 5);
+                    } else {
+                        pkt.element.setAttribute('opacity', '1');
+                    }
+                });
+
+                requestAnimationFrame(animateDNS);
+            }
+
+            animateDNS();
+        })();
+
+        // Fetch WAN stats
+        async function fetchWANStats() {
+            try {
+                var response = await fetch('/api/traceroute/api/wan/');
+                if (!response.ok) {
+                    console.error('WAN API error:', response.status);
+                    return;
+                }
+                var data = await response.json();
+                if (data.error) {
+                    console.error('WAN API error:', data.error);
+                    return;
+                }
+                document.getElementById('wan-state').textContent = data.state || '--';
+                document.getElementById('wan-ip').textContent = data.ip_address || '--';
+                document.getElementById('wan-gateway').textContent = data.gateway || '--';
+                document.getElementById('wan-uptime').textContent = data.connection_uptime || '--';
+                document.getElementById('wan-mac').textContent = data.wan_mac || '--';
+                document.getElementById('wan-type').textContent = data.connection_type || '--';
+                document.getElementById('wan-ipv6').textContent = data.ipv6_status || '--';
+                document.getElementById('wan-ipv6-addr').textContent = data.ipv6_address || '--';
+            } catch (error) {
+                console.error('Error fetching WAN stats:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchWANStats();
+            setInterval(fetchWANStats, 30000);
+        });
+    </script>
+</body>
+</html>

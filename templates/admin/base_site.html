@@ -1,0 +1,464 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+
+    body {
+        font-family: 'Rajdhani', sans-serif;
+        background-color: #0B0B0B !important;
+    }
+
+    #header {
+        background: linear-gradient(135deg, #1a1a1a 0%, #0B0B0B 100%) !important;
+        border-bottom: 2px solid #76B900 !important;
+        box-shadow: 0 0 20px rgba(118, 185, 0, 0.3);
+    }
+
+    #header a:link, #header a:visited {
+        color: #4DFF00 !important;
+        text-shadow: 0 0 10px #76B900;
+    }
+
+    #branding h1 {
+        color: #4DFF00 !important;
+        text-shadow: 0 0 10px #76B900;
+        font-weight: 700;
+    }
+
+    .module {
+        background: rgba(26, 26, 26, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(118, 185, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .module h2 {
+        background: rgba(118, 185, 0, 0.1) !important;
+        color: #4DFF00 !important;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3) !important;
+        text-shadow: 0 0 5px #76B900;
+    }
+
+    .module table {
+        color: #e0e0e0 !important;
+    }
+
+    .module th {
+        color: #76B900 !important;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3) !important;
+    }
+
+    .module td {
+        border-bottom: 1px solid rgba(118, 185, 0, 0.1) !important;
+    }
+
+    .button, input[type="submit"], input[type="button"], .submit-row input, a.button {
+        background: linear-gradient(135deg, #76B900, #4DFF00) !important;
+        color: #0B0B0B !important;
+        border: none !important;
+        border-radius: 6px;
+        font-weight: 600;
+        text-shadow: none !important;
+        box-shadow: 0 0 15px rgba(118, 185, 0, 0.4);
+        transition: all 0.3s ease;
+    }
+
+    .button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+        box-shadow: 0 0 25px rgba(77, 255, 0, 0.6);
+        transform: translateY(-2px);
+    }
+
+    #content-related {
+        background: rgba(26, 26, 26, 0.6) !important;
+        border: 1px solid rgba(118, 185, 0, 0.2) !important;
+        border-radius: 8px;
+    }
+
+    #content-related h2 {
+        color: #4DFF00 !important;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3) !important;
+    }
+
+    #content-related a:link, #content-related a:visited {
+        color: #76B900 !important;
+    }
+
+    #content-related a:hover {
+        color: #4DFF00 !important;
+        text-shadow: 0 0 10px #76B900;
+    }
+
+    .form-row {
+        border-bottom: 1px solid rgba(118, 185, 0, 0.1) !important;
+        padding: 20px 0 !important;
+    }
+
+    .form-row label {
+        color: #76B900 !important;
+        font-weight: 600;
+    }
+
+    input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="number"], textarea, select, .vTextField {
+        background: rgba(11, 11, 11, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #e0e0e0 !important;
+        border-radius: 4px;
+    }
+
+    input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, textarea:focus {
+        border-color: #4DFF00 !important;
+        box-shadow: 0 0 10px rgba(77, 255, 0, 0.3);
+    }
+
+    thead th {
+        background: rgba(118, 185, 0, 0.1) !important;
+        color: #4DFF00 !important;
+        border-bottom: 2px solid #76B900 !important;
+    }
+
+    .actions select {
+        background: rgba(11, 11, 11, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #e0e0e0 !important;
+    }
+
+    #changelist-filter {
+        background: rgba(26, 26, 26, 0.6) !important;
+        border: 1px solid rgba(118, 185, 0, 0.2) !important;
+        border-radius: 8px;
+    }
+
+    #changelist-filter h2 {
+        color: #4DFF00 !important;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3) !important;
+    }
+
+    #changelist-filter li a:link, #changelist-filter li a:visited {
+        color: #76B900 !important;
+    }
+
+    #changelist-filter li a:hover {
+        color: #4DFF00 !important;
+    }
+
+    .paginator {
+        color: #76B900 !important;
+    }
+
+    .paginator a:link, .paginator a:visited {
+        color: #76B900 !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+    }
+
+    .paginator a:hover {
+        background: rgba(118, 185, 0, 0.1) !important;
+    }
+
+    .errornote, .warning, .info {
+        background: rgba(118, 185, 0, 0.1) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #4DFF00 !important;
+        border-radius: 6px;
+    }
+
+    a:link, a:visited {
+        color: #76B900 !important;
+    }
+
+    a:hover {
+        color: #4DFF00 !important;
+        text-shadow: 0 0 10px #76B900;
+    }
+
+    #user-tools a:link, #user-tools a:visited {
+        color: #76B900 !important;
+    }
+
+    #user-tools a:hover {
+        color: #4DFF00 !important;
+    }
+
+    .dashboard-module {
+        background: rgba(26, 26, 26, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        border-radius: 8px;
+    }
+
+    .dashboard-module h2 {
+        background: rgba(118, 185, 0, 0.1) !important;
+        color: #4DFF00 !important;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3) !important;
+    }
+
+    .change-list .filtered {
+        background: rgba(118, 185, 0, 0.05) !important;
+    }
+
+    .selector .selector-available, .selector .selector-chosen {
+        background: rgba(26, 26, 26, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #e0e0e0 !important;
+    }
+
+    .selector-available h2, .selector-chosen h2 {
+        background: rgba(118, 185, 0, 0.1) !important;
+        color: #4DFF00 !important;
+    }
+
+    .selector .selector-available input, .selector .selector-chosen input {
+        background: rgba(11, 11, 11, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #e0e0e0 !important;
+    }
+
+    .related-widget-wrapper select {
+        background: rgba(11, 11, 11, 0.8) !important;
+        border: 1px solid rgba(118, 185, 0, 0.3) !important;
+        color: #e0e0e0 !important;
+    }
+
+    tr.row1 {
+        background: rgba(26, 26, 26, 0.4) !important;
+    }
+
+    tr.row2 {
+        background: rgba(11, 11, 11, 0.6) !important;
+    }
+
+    tr.row1:hover, tr.row2:hover {
+        background: rgba(118, 185, 0, 0.1) !important;
+    }
+
+    #nav-sidebar {
+        background: rgba(11, 11, 11, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(118, 185, 0, 0.3) !important;
+        box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        width: 256px !important;
+        padding: 0 !important;
+        overflow-y: auto !important;
+    }
+
+    #nav-sidebar .nav-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3);
+    }
+
+    #nav-sidebar .nav-header h1 {
+        color: #4DFF00;
+        text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-header p {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0 0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-menu {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    #nav-sidebar .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.25rem;
+        color: #9ca3af;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-item:hover {
+        background: rgba(118, 185, 0, 0.1);
+        border-left-color: #4DFF00;
+        color: #fff;
+    }
+
+    #nav-sidebar .nav-item.active {
+        background: rgba(118, 185, 0, 0.1);
+        border-left-color: #4DFF00;
+        color: #fff;
+    }
+
+    #nav-sidebar .nav-item svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: #4DFF00;
+        flex-shrink: 0;
+    }
+
+    #nav-sidebar .nav-item span {
+        font-size: 0.95rem;
+    }
+
+    #nav-sidebar .nav-footer {
+        padding: 1rem;
+        border-top: 1px solid rgba(118, 185, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #nav-sidebar .nav-footer .pulse-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        background: #4DFF00;
+        border-radius: 50%;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    #nav-sidebar .nav-footer span {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .sticky.toggle-nav-sidebar {
+        background: rgba(118, 185, 0, 0.2) !important;
+        border-color: rgba(118, 185, 0, 0.3) !important;
+    }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #nav-sidebar {
+        background: rgba(11, 11, 11, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(118, 185, 0, 0.3) !important;
+        box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        width: 256px !important;
+        padding: 0 !important;
+        overflow-y: auto !important;
+    }
+
+    #nav-sidebar .nav-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(118, 185, 0, 0.3);
+    }
+
+    #nav-sidebar .nav-header h1 {
+        color: #4DFF00;
+        text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-header p {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0 0;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-menu {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    #nav-sidebar .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.25rem;
+        color: #9ca3af;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    #nav-sidebar .nav-item:hover {
+        background: rgba(118, 185, 0, 0.1);
+        border-left-color: #4DFF00;
+        color: #fff;
+    }
+
+    #nav-sidebar .nav-item.active {
+        background: rgba(118, 185, 0, 0.1);
+        border-left-color: #4DFF00;
+        color: #fff;
+    }
+
+    #nav-sidebar .nav-item svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: #4DFF00;
+        flex-shrink: 0;
+    }
+
+    #nav-sidebar .nav-item span {
+        font-size: 0.95rem;
+    }
+
+    #nav-sidebar .nav-footer {
+        padding: 1rem;
+        border-top: 1px solid rgba(118, 185, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    #nav-sidebar .nav-footer .pulse-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        background: #4DFF00;
+        border-radius: 50%;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    #nav-sidebar .nav-footer span {
+        color: #9ca3af;
+        font-size: 0.8rem;
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .sticky.toggle-nav-sidebar {
+        background: rgba(118, 185, 0, 0.2) !important;
+        border-color: rgba(118, 185, 0, 0.3) !important;
+    }
+</style>
+            </div>
+        </div>
+    </div>
+{% endblock %}

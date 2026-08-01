@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Globe Scanner - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        body {
+            background-color: #0B0B0B;
+        }
+
+        .neon-text {
+            color: #4DFF00;
+            text-shadow: 0 0 10px #76B900, 0 0 20px #76B900, 0 0 40px #4DFF00;
+        }
+
+        .neon-border {
+            border: 1px solid #76B900;
+            box-shadow: 0 0 10px rgba(118, 185, 0, 0.5), inset 0 0 10px rgba(118, 185, 0, 0.1);
+        }
+
+        .glass-effect {
+            background: rgba(11, 11, 11, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(118, 185, 0, 0.3);
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(118, 185, 0, 0.6);
+        }
+
+        .sidebar-glow {
+            box-shadow: 5px 0 20px rgba(77, 255, 0, 0.2);
+        }
+
+        .stat-value {
+            background: linear-gradient(135deg, #76B900, #4DFF00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background: rgba(118, 185, 0, 0.1);
+            border-left: 3px solid #4DFF00;
+        }
+
+        .pulse-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #4DFF00, transparent);
+            animation: scan 3s linear infinite;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+            }
+            100% {
+                top: 100vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-[#0B0B0B] text-gray-300">
+    <div class="scan-line"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 glass-effect sidebar-glow flex flex-col">
+            <div class="p-6 border-b border-[#76B900] border-opacity-30">
+                <h1 class="text-2xl font-bold neon-text">NETWORK</h1>
+                <p class="text-sm text-gray-400">GLOBE SCANNER</p>
+            </div>
+
+            <nav class="flex-1 p-4">
+                <a href="/api/dashboard/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-white bg-opacity-10 bg-[#76B900]">
+                    <svg class="w-5 h-5 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                    </svg>
+                    <span class="font-semibold">Dashboard</span>
+                </a>
+                <a href="/api/dashboard/api/stats/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+                <a href="/api/servers/servers/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                    </svg>
+                    <span>Servers</span>
+                </a>
+                <a href="/api/datacenters/datacenters/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                    <span>Datacenters</span>
+                </a>
+                <a href="/animations/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Animations</span>
+                </a>
+                <a href="/api/traceroute/traceroutes/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span>Traceroute</span>
+                </a>
+                <a href="/api/dns/dns/" class="nav-item flex items-center space-x-3 p-3 rounded mb-2 text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <span>DNS Lookup</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-[#76B900] border-opacity-30">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 bg-[#4DFF00] rounded-full pulse-dot"></div>
+                    <span class="text-sm text-gray-400">System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <header class="mb-8">
+                <h2 class="text-4xl font-bold text-white mb-2">Dashboard Overview</h2>
+                <p class="text-gray-400">Real-time network monitoring and analytics</p>
+            </header>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Total Scans</p>
+                    <p class="text-3xl font-bold stat-value" id="total-scans">0</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">ONLINE</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Active Servers</p>
+                    <p class="text-3xl font-bold stat-value" id="active-servers">0</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">GLOBAL</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Global Datacenters</p>
+                    <p class="text-3xl font-bold stat-value" id="global-datacenters">0</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">DNS Queries</p>
+                    <p class="text-3xl font-bold stat-value" id="dns-queries">0</p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Average Latency</p>
+                    <p class="text-3xl font-bold stat-value"><span id="average-latency">0</span> <span class="text-lg">ms</span></p>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6 card-hover">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-3 bg-[#76B900] bg-opacity-20 rounded-lg">
+                            <svg class="w-6 h-6 text-[#4DFF00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-1">Packet Loss</p>
+                    <p class="text-3xl font-bold stat-value"><span id="packet-loss">0</span> <span class="text-lg">%</span></p>
+                </div>
+            </div>
+
+            <!-- WAN Status -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white">WAN Status</h3>
+                    <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">WAN State</p>
+                        <p class="text-2xl font-bold" id="wan-state" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">WAN IP</p>
+                        <p class="text-2xl font-bold stat-value" id="wan-ip">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Gateway</p>
+                        <p class="text-lg font-bold mono" id="wan-gateway" style="color: #00BFFF;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Uptime</p>
+                        <p class="text-lg font-bold" id="wan-uptime" style="color: #FFA500;">--</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 flex-wrap">
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">WAN MAC</p>
+                        <p class="font-mono text-sm" id="wan-mac" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">Connection Type</p>
+                        <p class="text-sm" id="wan-type" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">IPv6 Status</p>
+                        <p class="text-sm" id="wan-ipv6" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <p class="text-gray-400 text-xs mb-1">IPv6 Address</p>
+                        <p class="font-mono text-sm" id="wan-ipv6-addr" style="color: #00BFFF;">--</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-right">
+                    <a href="/api/traceroute/wan/" class="text-sm text-[#76B900] hover:text-[#4DFF00]">View Full WAN Details &#8594;</a>
+                </div>
+            </div>
+
+            <!-- Wireless Status -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white">Wireless Status</h3>
+                    <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">SSID</p>
+                        <p class="text-lg font-bold" id="wireless-ssid" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">State</p>
+                        <p class="text-lg font-bold" id="wireless-state" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Signal</p>
+                        <p class="text-lg font-bold" id="wireless-signal" style="color: #FFA500;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">Clients</p>
+                        <p class="text-lg font-bold stat-value" id="wireless-clients">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAN Status -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-white">LAN Status</h3>
+                    <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">LAN IP</p>
+                        <p class="text-lg font-bold mono" id="lan-ip" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">DHCP</p>
+                        <p class="text-lg font-bold" id="lan-dhcp" style="color: #4DFF00;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">DHCP Range</p>
+                        <p class="text-sm mono" id="lan-dhcp-range" style="color: #e0e0e0;">--</p>
+                    </div>
+                    <div class="stat-card">
+                        <p class="text-gray-400 text-sm mb-1">LAN Clients</p>
+                        <p class="text-lg font-bold stat-value" id="lan-clients">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Optical & VoIP -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Optical Info</h3>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">State</p>
+                            <p class="text-sm font-bold" id="optical-state" style="color: #4DFF00;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">TX Power</p>
+                            <p class="text-sm font-bold" id="optical-tx" style="color: #FFA500;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">RX Power</p>
+                            <p class="text-sm font-bold" id="optical-rx" style="color: #00BFFF;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">Temperature</p>
+                            <p class="text-sm font-bold" id="optical-temp" style="color: #e0e0e0;">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-effect rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">VoIP Status</h3>
+                        <span class="text-xs text-[#4DFF00] bg-[#76B900] bg-opacity-20 px-2 py-1 rounded">LIVE</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">State</p>
+                            <p class="text-sm font-bold" id="voip-state" style="color: #4DFF00;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">Registration</p>
+                            <p class="text-sm font-bold" id="voip-reg" style="color: #4DFF00;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">Active Calls</p>
+                            <p class="text-sm font-bold" id="voip-calls" style="color: #FFA500;">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">SIP Server</p>
+                            <p class="text-sm mono" id="voip-sip" style="color: #e0e0e0;">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="glass-effect rounded-lg p-6 mt-6">
+                <h3 class="text-xl font-bold text-white mb-4">Network Performance</h3>
+                <canvas id="performanceChart" height="80"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Fetch stats from API
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/dashboard/api/stats/');
+                const data = await response.json();
+
+                document.getElementById('total-scans').textContent = data.total_scans.toLocaleString();
+                document.getElementById('active-servers').textContent = data.active_servers.toLocaleString();
+                document.getElementById('global-datacenters').textContent = data.global_datacenters.toLocaleString();
+                document.getElementById('dns-queries').textContent = data.dns_queries.toLocaleString();
+                document.getElementById('average-latency').textContent = data.average_latency;
+                document.getElementById('packet-loss').textContent = data.packet_loss;
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        // Initialize chart
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Network Traffic (GB)',
+                    data: [65, 78, 90, 81, 95, 110],
+                    borderColor: '#76B900',
+                    backgroundColor: 'rgba(118, 185, 0, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4DFF00',
+                    pointBorderColor: '#4DFF00',
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#4DFF00',
+                            font: {
+                                family: 'Rajdhani',
+                                size: 14,
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(118, 185, 0, 0.1)',
+                        },
+                        ticks: {
+                            color: '#76B900',
+                            font: {
+                                family: 'Rajdhani',
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(118, 185, 0, 0.1)',
+                        },
+                        ticks: {
+                            color: '#76B900',
+                            font: {
+                                family: 'Rajdhani',
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Fetch WAN stats from API
+        async function fetchWANStats() {
+            try {
+                const response = await fetch('/api/traceroute/api/wan/');
+                const data = await response.json();
+                if (data.error) return;
+                document.getElementById('wan-state').textContent = data.state || '--';
+                document.getElementById('wan-ip').textContent = data.ip_address || '--';
+                document.getElementById('wan-gateway').textContent = data.gateway || '--';
+                document.getElementById('wan-uptime').textContent = data.connection_uptime || '--';
+                document.getElementById('wan-mac').textContent = data.wan_mac || '--';
+                document.getElementById('wan-type').textContent = data.connection_type || '--';
+                document.getElementById('wan-ipv6').textContent = data.ipv6_status || '--';
+                document.getElementById('wan-ipv6-addr').textContent = data.ipv6_address || '--';
+            } catch (error) {
+                console.error('Error fetching WAN stats:', error);
+            }
+        }
+
+        // Fetch full router stats from API
+        async function fetchRouterStats() {
+            try {
+                const response = await fetch('/api/dashboard/api/stats/');
+                const data = await response.json();
+
+                if (data.wireless_ssid) {
+                    document.getElementById('wireless-ssid').textContent = data.wireless_ssid;
+                    document.getElementById('wireless-state').textContent = data.wireless_state || '--';
+                    document.getElementById('wireless-signal').textContent = (data.wireless_signal || 0) + '%';
+                    document.getElementById('wireless-clients').textContent = data.wireless_clients || 0;
+                }
+
+                if (data.lan_ip) {
+                    document.getElementById('lan-ip').textContent = data.lan_ip;
+                    document.getElementById('lan-dhcp').textContent = 'Enabled';
+                    document.getElementById('lan-dhcp-range').textContent = '--';
+                    document.getElementById('lan-clients').textContent = data.lan_clients || 0;
+                }
+
+                if (data.optical_state) {
+                    document.getElementById('optical-state').textContent = data.optical_state;
+                    document.getElementById('optical-tx').textContent = '-- dBm';
+                    document.getElementById('optical-rx').textContent = '-- dBm';
+                    document.getElementById('optical-temp').textContent = '-- C';
+                }
+
+                if (data.voip_state) {
+                    document.getElementById('voip-state').textContent = data.voip_state;
+                    document.getElementById('voip-reg').textContent = '--';
+                    document.getElementById('voip-calls').textContent = '0';
+                    document.getElementById('voip-sip').textContent = '--';
+                }
+            } catch (error) {
+                console.error('Error fetching router stats:', error);
+            }
+        }
+
+        // Fetch stats from API
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/dashboard/api/stats/');
+                const data = await response.json();
+
+                document.getElementById('total-scans').textContent = data.total_scans.toLocaleString();
+                document.getElementById('active-servers').textContent = data.active_servers.toLocaleString();
+                document.getElementById('global-datacenters').textContent = data.global_datacenters.toLocaleString();
+                document.getElementById('dns-queries').textContent = data.dns_queries.toLocaleString();
+                if (data.wan_ip) {
+                    document.getElementById('wan-ip').textContent = data.wan_ip;
+                }
+                if (data.wan_state) {
+                    document.getElementById('wan-state').textContent = data.wan_state;
+                }
+                if (data.wan_gateway) {
+                    document.getElementById('wan-gateway').textContent = data.wan_gateway;
+                }
+                if (data.wan_uptime) {
+                    document.getElementById('wan-uptime').textContent = data.wan_uptime;
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        // Load stats on page load
+        fetchStats();
+        fetchWANStats();
+        fetchRouterStats();
+        setInterval(fetchStats, 5000);
+        setInterval(fetchWANStats, 30000);
+        setInterval(fetchRouterStats, 30000);
+    </script>
+</body>
+</html>
