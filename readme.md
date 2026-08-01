@@ -7,6 +7,7 @@ A Django-based network monitoring and management platform with NVIDIA Neon theme
 - **Dashboard**: Unified monitoring dashboard with real-time stats, charts, and network topology animation
 - **Traceroute**: Scan domains/IPs with hop-by-hop results (like Windows tracert)
 - **DNS Lookup**: Query DNS records (A, AAAA, MX, TXT, CNAME, NS, PTR, SPF)
+- **Animations**: Real-time traceroute path animation (Canvas) and DNS resolution animation (SVG+CSS)
 - **Datacenter Management**: Add and manage global datacenters
 - **Server Management**: Add and manage servers with status tracking
 - **Admin Panel**: Professional Django admin with custom neon theme
@@ -118,6 +119,7 @@ Role: Super Admin
 | URL | Description |
 |-----|-------------|
 | `/` | Unified Dashboard (redirects) |
+| `/animations/` | Traceroute & DNS Resolution Animations |
 | `/api/dashboard/unified/` | Main monitoring dashboard |
 | `/admin/` | Django admin panel |
 | `/swagger/` | API documentation |
@@ -195,7 +197,21 @@ C:\www\nslookup\
 │       ├── base_site.html  # Neon admin theme
 │       ├── index.html      # Custom admin dashboard
 │       └── dashboard.html  # Admin dashboard with topology
-├── static/                 # Static files
+├── static/
+│   ├── css/
+│   │   └── animations.css        # DNS resolution animation styles
+│   └── js/
+│       ├── traceroute-animation.js       # Canvas traceroute path animation
+│       └── dns-resolution-animation.js   # SVG+CSS DNS resolution animation
+├── templates/
+│   ├── dashboard/
+│   │   ├── animations.html     # Traceroute & DNS animation page
+│   │   ├── unified.html        # Main dashboard
+│   │   └── index.html          # Stats dashboard
+│   └── admin/
+│       ├── base_site.html  # Neon admin theme
+│       ├── index.html      # Custom admin dashboard
+│       └── dashboard.html  # Admin dashboard with topology
 ├── requirements.txt
 ├── docker-compose.yml
 ├── Dockerfile
@@ -228,6 +244,7 @@ The run scripts automatically seed:
 
 - Custom NVIDIA neon theme
 - Dashboard overview with stats cards
+- **Animations page**: Real-time traceroute path (Canvas) and DNS resolution (SVG+CSS) visualizations
 - **Direct CRUD tables**: Datacenters, Servers, Traceroutes, DNS Queries
 - **Inline add forms**: Add datacenters and servers directly from dashboard
 - **Animated network topology**: Interactive canvas showing worldwide datacenter connections
